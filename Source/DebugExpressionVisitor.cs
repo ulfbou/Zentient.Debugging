@@ -5,7 +5,133 @@ using System.Linq.Expressions;
 namespace Zentient.Debugging
 {
 
-    public class DebugExpressionVisitor : ExpressionVisitor
+    public LogLevel LogLevel { get; set; } = LogLevel.Basic;
+    public bool LogMethodCalls { get; set; } = true;
+    public bool LogBinaryExpressions { get; set; } = true;
+    public bool LogConstants { get; set; } = true;
+    public bool LogLambdas { get; set; } = true;
+    public bool LogParameters { get; set; } = true;
+    public bool LogUnaryExpressions { get; set; } = true;
+    public bool LogMembers { get; set; } = true;
+
+    private readonly Stopwatch _stopwatch = new Stopwatch();
+
+    protected override Expression VisitMethodCall(MethodCallExpression node)
+    {
+        if (LogMethodCalls)
+        {
+            LogVisit("VisitMethodCall", node.Method.Name);
+        }
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            _stopwatch.Restart();
+        }
+
+        var result = base.VisitMethodCall(node);
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            LogPerformance("VisitMethodCall", node.Method.Name);
+        }
+
+        return result;
+    }
+
+    protected override Expression VisitBinary(BinaryExpression node)
+    {
+        if (LogBinaryExpressions)
+        {
+            LogVisit("VisitBinary", node.NodeType.ToString());
+        }
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            _stopwatch.Restart();
+        }
+
+        var result = base.VisitBinary(node);
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            LogPerformance("VisitBinary", node.NodeType.ToString());
+        }
+
+        return result;
+    }
+
+    protected override Expression VisitConstant(ConstantExpression node)
+    {
+        if (LogConstants)
+        {
+            LogVisit("VisitConstant", node.Value?.ToString());
+        }
+        return base.VisitConstant(node);
+    }
+
+    protected override Expression VisitLambda<T>(Expression<T> node)
+    {
+        if (LogLambdas)
+        {
+            LogVisit("VisitLambda", node.Name);
+        }
+        return base.VisitLambda(node);
+    }
+
+    protected override Expression VisitParameter(ParameterExpression node)
+    {
+        if (LogParameters)
+        {
+            LogVisit("VisitParameter", node.Name);
+        }
+        return base.VisitParameter(node);
+    }
+
+    protected override Expression VisitUnary(UnaryExpression node)
+    {
+        if (LogUnaryExpressions)
+        {
+            LogVisit("VisitUnary", node.NodeType.ToString());
+        }
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            _stopwatch.Restart();
+        }
+
+        var result = base.VisitUnary(node);
+
+        if (LogLevel == LogLevel.Detailed)
+        {
+            LogPerformance("VisitUnary", node.NodeType.ToString());
+        }
+
+        return result;
+    }
+
+    protected override Expression VisitMember(MemberExpression node)
+    {
+        if (LogMembers)
+        {
+            LogVisit("VisitMember", node.Member.Name);
+        }
+        return base.VisitMember(node);
+    }
+
+    private void LogVisit(string methodName, string detail)
+    {
+        if (LogLevel != LogLevel.None)
+        {
+            Debug.WriteLine($"{methodName}: {detail}");
+        }
+    }
+
+    private void LogPerformance(string methodName, string detail)
+    {
+        _stopwatch.Stop();
+        Debug.WriteLine($"{methodName} {detail} took {_stopwatch.ElapsedMilliseconds} ms");
+    }
+public class DebugExpressionVisitor : ExpressionVisitor
     {
         protected override Expression VisitBinary(BinaryExpression node)
         {
